@@ -23,6 +23,16 @@
 -   **Value**：你要存储的具体对象（**强引用**）。
     
 
+```text
+Thread (线程)
+  └── threadLocals (成员变量)
+        └── ThreadLocalMap (对象)
+              └── table (成员变量，类型是 Entry[])  <--- 这就是那个数组
+                    ├── [0] Entry (Key: ThreadLocal 实例 A, Value: 对象 A)
+                    ├── [1] Entry (Key: ThreadLocal 实例 B, Value: 对象 B)
+                    └── [2] null ...
+```
+
 > **比喻**：每个线程（Thread）都随身带了一个“私密日记本”（ThreadLocalMap）。日记本里的每一行由“标题”（ThreadLocal 变量名）和“内容”（Value）组成。不同人的日记本互不干扰。
 
 #### B. get() 与 set() 的执行逻辑
