@@ -41,7 +41,7 @@ Thread (线程)
     
 -   **get()**：获取当前线程，从其 Map 中以 `this`（当前的 ThreadLocal 对象）为 Key 查找对应的 Entry，取出 Value。
     
--   **哈希冲突解决**：`ThreadLocalMap` 采用 **线性探测法**（若位置被占，则顺延找下一个空位），而非 HashMap 的链表/红黑树。因为 ThreadLocal 变量通常不多，线性探测对 CPU 缓存更友好。
+-   **哈希冲突解决**：`ThreadLocalMap` 采用 **线性探测法**（若位置被占，则顺延找下一个空位），而非 HashMap 的链表/红黑树。因为 ThreadLocal 变量通常不多，**线性探测对 CPU 缓存更友好**，轻量化的设计也更加高效。
     
 
 #### C. 实战案例：Spring Security
@@ -76,6 +76,24 @@ Thread (线程)
 #### Q3：InheritableThreadLocal 是做什么的？
 
 **答**：用于父子线程间的数据传递。在 `new Thread` 时，子线程会拷贝父线程 `InheritableThreadLocal` 中的内容。
+
+**InheritableThreadLocal** 的原理 在 Thread 类的源码中，除了普通的 threadLocals 变量，还有一个 inheritableThreadLocals 变量。
+
+-   克隆机制：当你 new Thread() 创建子线程时，构造函数会调用 Thread.init() 方法。
+    
+-   深拷贝（逻辑上）：该方法会检查父线程的 inheritableThreadLocals 是否为空，如果不为空，就将父线程中的 Map 里的内容拷贝一份到子线程的 Map 中。
+    
+-   结论：它的传递发生在线程创建（new）的那一刻。
+    
+
+**线程池环境下的“诡异现象”**：数据污染/失效 这是生产环境最容易出 Bug 的地方。
+
+-   现象：你会发现子线程拿到的数据是旧的，或者是上一个任务留下来的。
+    
+-   原因：线程池的核心线程是复用的，它们只在创建时进行一次父子拷贝。当线程执行完任务回到池子里，下次再执行新任务时，它不会再次同步当前提交任务的那个主线程的数据。
+    
+-   后果：比如 TraceID 乱串，A 请求的日志里出现了 B 请求的 ID。
+    
 
 ---
 
